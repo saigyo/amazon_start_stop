@@ -3,17 +3,23 @@
 require 'fog'
 require 'tzinfo'
 
-START_HOUR = 6 # Start 6AM
-STOP_HOUR  = 0 # Stop  0AM (midnight)
+START_HOUR = ENV['START_HOUR'].to_i
+STOP_HOUR  = ENV['STOP_HOUR'].to_i
 
 conn = Fog::Compute::AWS.new(aws_access_key_id:     ENV['AWS_ACCESS_KEY_ID'],
-                             aws_secret_access_key: ENV['AWS_SECRET_ACCESS_KEY'])
+                             aws_secret_access_key: ENV['AWS_SECRET_ACCESS_KEY'],
+                             region:                ENV['EC2_REGION'])
 
 server = conn.servers.get(ENV['AWS_INSTANCE_ID'])
 
+if server.nil?
+  puts "No server found for instance id #{ENV['AWS_INSTANCE_ID']}"
+  exit
+end
+
 puts "amazon_start_stop server #{server.id}"
 
-tz = TZInfo::Timezone.get('America/Sao_Paulo')
+tz = TZInfo::Timezone.get('Europe/Berlin')
 
 # To get all zone identifiers by Country i.e. US, BR etc.
 # TZInfo::Country.get('BR').zone_identifiers.inspect
@@ -21,11 +27,15 @@ tz = TZInfo::Timezone.get('America/Sao_Paulo')
 now = tz.now
 
 puts "now #{now}"
+puts "now hour #{now.hour}"
 puts "start hour #{START_HOUR}"
 puts "stop hour #{STOP_HOUR}"
 
-stopped_range = (now.hour >= STOP_HOUR && now.hour < START_HOUR)
+stopped_range = (now.hour >= STOP_HOUR || now.hour < START_HOUR)
 running_range = !stopped_range
+
+puts "server status: #{server.state}"
+puts "in stopped range: #{stopped_range}"
 
 if stopped_range && server.state != 'stopped'
   puts "stopping server #{server.id}"
@@ -39,7 +49,9 @@ if running_range && server.state != 'running'
 
   server.start
 
-  if elastic_ip = ENV['AWS_ELASTIC_IP']
+elastic_ip = ENV['AWS_ELASTIC_IP']
+
+if !elastic_ip.nil? && !elastic_ip.empty?
     server.wait_for { state == 'running' }
     puts "associating #{elastic_ip} to #{server.id}"
     conn.associate_address server.id, elastic_ip

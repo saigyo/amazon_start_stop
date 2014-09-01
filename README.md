@@ -47,14 +47,10 @@ $ heroku config:set EC2_REGION=
 # (everytime you stop an instance Amazon dissociates Elastic IPs)
 $ heroku config:set AWS_ELASTIC_IP=
 
-
 # The start and stop times (in 24h clock hours, UTC timezone) are configured per config vars as well:
 $ heroku config:set START_HOUR=
 $ heroku config:set STOP_HOUR=
 ```
-
-Please note, that the script currently only works for time ranges within the same day, e.g. START_HOUR=8 and STOP_HOUR=18, 
-but not for time ranges crossing midnight.
 
 In development create an `.env`.
 

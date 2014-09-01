@@ -31,8 +31,13 @@ puts "now hour #{now.hour}"
 puts "start hour #{START_HOUR}"
 puts "stop hour #{STOP_HOUR}"
 
-stopped_range = (now.hour >= STOP_HOUR || now.hour < START_HOUR)
-running_range = !stopped_range
+running_range = if START_HOUR > STOP_HOUR
+                  now.hour < STOP_HOUR || now.hour >= START_HOUR
+                else 
+                  now.hour >= START_HOUR && now.hour < STOP_HOUR
+                end
+
+stopped_range = !running_range
 
 puts "server status: #{server.state}"
 puts "in stopped range: #{stopped_range}"
@@ -49,9 +54,9 @@ if running_range && server.state != 'running'
 
   server.start
 
-elastic_ip = ENV['AWS_ELASTIC_IP']
+  elastic_ip = ENV['AWS_ELASTIC_IP']
 
-if !elastic_ip.nil? && !elastic_ip.empty?
+  if !elastic_ip.nil? && !elastic_ip.empty?
     server.wait_for { state == 'running' }
     puts "associating #{elastic_ip} to #{server.id}"
     conn.associate_address server.id, elastic_ip

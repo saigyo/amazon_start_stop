@@ -19,7 +19,7 @@ end
 
 puts "amazon_start_stop server #{server.id}"
 
-tz = TZInfo::Timezone.get('Europe/Berlin')
+tz = TZInfo::Timezone.get('Etc/UTC')
 
 # To get all zone identifiers by Country i.e. US, BR etc.
 # TZInfo::Country.get('BR').zone_identifiers.inspect
